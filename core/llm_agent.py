@@ -6,10 +6,24 @@ from google import genai
 from google.genai import types
 
 from core.models import PortfolioItem
-from core.sanitizer import spotlight_untrusted
+from core.sanitizer import sanitize_untrusted_text, spotlight_untrusted
 
 
 MODEL_NAME = "gemini-4-hydrogen"
+
+
+class UnsafeInputError(ValueError):
+    """Raised when untrusted input fails the mandatory pre-LLM security gate."""
+
+
+def prepare_llm_input(raw_text: str, max_chars: int) -> str:
+    """Normalize and validate untrusted text immediately before an LLM request."""
+    cleaned, flagged, _alerts = sanitize_untrusted_text(raw_text, max_chars=max_chars)
+    if not cleaned:
+        raise UnsafeInputError("Input is empty after sanitization.")
+    if flagged:
+        raise UnsafeInputError("Input was blocked by the pre-LLM security gate.")
+    return cleaned
 
 
 def get_client() -> genai.Client:
@@ -21,6 +35,7 @@ def get_client() -> genai.Client:
 
 def answer_visitor_question(question: str, allowed_items: list[PortfolioItem]) -> str:
     """Answer using only records already authorized for this visitor."""
+    cleaned_question = prepare_llm_input(question, max_chars=2_000)
     context_blocks = [
         f"[{item.category.upper()}] {item.title}: {item.content} "
         f"(Repo: {item.repo_url or 'N/A'}, Demo: {item.demo_url or 'N/A'})"
@@ -37,7 +52,7 @@ def answer_visitor_question(question: str, allowed_items: list[PortfolioItem]) -
     with get_client() as client:
         response = client.models.generate_content(
             model=MODEL_NAME,
-            contents=spotlight_untrusted(question),
+            contents=spotlight_untrusted(cleaned_question),
             config=types.GenerateContentConfig(
                 system_instruction=system_instruction,
                 temperature=0.2,
@@ -48,6 +63,7 @@ def answer_visitor_question(question: str, allowed_items: list[PortfolioItem]) -
 
 def draft_project_update(raw_notes: str) -> str:
     """Draft an owner-reviewable portfolio entry from sanitized project notes."""
+    cleaned_notes = prepare_llm_input(raw_notes, max_chars=8_000)
     system_instruction = (
         "You are a portfolio editor. Convert the project notes inside the randomized "
         "untrusted_data tags into a concise portfolio entry with a title and three bullet "
@@ -56,7 +72,7 @@ def draft_project_update(raw_notes: str) -> str:
     with get_client() as client:
         response = client.models.generate_content(
             model=MODEL_NAME,
-            contents=spotlight_untrusted(raw_notes),
+            contents=spotlight_untrusted(cleaned_notes),
             config=types.GenerateContentConfig(
                 system_instruction=system_instruction,
                 temperature=0.3,

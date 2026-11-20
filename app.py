@@ -16,6 +16,16 @@ from core.sanitizer import sanitize_untrusted_text
 BASE_DIR = Path(__file__).resolve().parent
 DATA_PATH = BASE_DIR / "data" / "portfolio.json"
 BACKGROUND_PATH = BASE_DIR / "assets" / "images" / "portfolio-background.jpeg"
+
+CATEGORY_ICONS = {
+    "about": ":material/person:",
+    "project": ":material/rocket_launch:",
+    "skills": ":material/terminal:",
+    "experience": ":material/work_history:",
+    "education": ":material/school:",
+    "case study": ":material/analytics:",
+    "contact": ":material/alternate_email:",
+}
 load_dotenv(BASE_DIR / ".env")
 
 
@@ -72,6 +82,53 @@ st.session_state.setdefault("access_mode", "Public")
 store = load_store(str(DATA_PATH), DATA_PATH.stat().st_mtime)
 
 with st.sidebar:
+    with st.container(key="sidebar_molecules"):
+        st.html(
+            """
+            <svg class="sidebar-molecule-field" viewBox="0 0 320 900"
+                 preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+              <g class="molecule-layer molecule-layer-a">
+                <g class="molecule-bonds">
+                  <line x1="18" y1="90" x2="104" y2="42" />
+                  <line x1="104" y1="42" x2="178" y2="118" />
+                  <line x1="178" y1="118" x2="286" y2="72" />
+                  <line x1="36" y1="248" x2="122" y2="190" />
+                  <line x1="122" y1="190" x2="222" y2="260" />
+                  <line x1="222" y1="260" x2="306" y2="205" />
+                  <line x1="122" y1="190" x2="178" y2="118" />
+                </g>
+                <g class="molecule-nodes">
+                  <circle cx="18" cy="90" r="5" /><circle cx="104" cy="42" r="8" />
+                  <circle cx="178" cy="118" r="6" /><circle cx="286" cy="72" r="4" />
+                  <circle cx="36" cy="248" r="6" /><circle cx="122" cy="190" r="5" />
+                  <circle cx="222" cy="260" r="8" /><circle cx="306" cy="205" r="5" />
+                </g>
+              </g>
+              <g class="molecule-layer molecule-layer-b">
+                <g class="molecule-bonds">
+                  <line x1="4" y1="430" x2="82" y2="356" />
+                  <line x1="82" y1="356" x2="170" y2="420" />
+                  <line x1="170" y1="420" x2="294" y2="370" />
+                  <line x1="28" y1="610" x2="116" y2="540" />
+                  <line x1="116" y1="540" x2="210" y2="624" />
+                  <line x1="210" y1="624" x2="314" y2="550" />
+                  <line x1="170" y1="420" x2="116" y2="540" />
+                  <line x1="54" y1="790" x2="150" y2="724" />
+                  <line x1="150" y1="724" x2="274" y2="800" />
+                  <line x1="210" y1="624" x2="150" y2="724" />
+                </g>
+                <g class="molecule-nodes molecule-nodes-delayed">
+                  <circle cx="4" cy="430" r="5" /><circle cx="82" cy="356" r="8" />
+                  <circle cx="170" cy="420" r="5" /><circle cx="294" cy="370" r="7" />
+                  <circle cx="28" cy="610" r="4" /><circle cx="116" cy="540" r="7" />
+                  <circle cx="210" cy="624" r="6" /><circle cx="314" cy="550" r="4" />
+                  <circle cx="54" cy="790" r="7" /><circle cx="150" cy="724" r="5" />
+                  <circle cx="274" cy="800" r="8" />
+                </g>
+              </g>
+            </svg>
+            """
+        )
     st.title(":material/shield_lock: SecureFolio AI")
     st.caption("A permission-aware portfolio and AI assistant")
     st.subheader("Preview access")
@@ -135,7 +192,8 @@ with st.sidebar:
 
 allowed_items = filter_items_for_visitor(store, effective_email, is_owner)
 portfolio_tab, chat_tab, owner_tab = st.tabs(
-    ["Portfolio", "Visitor Q&A", "Owner Agent Studio"]
+    ["Portfolio", "Visitor Q&A", "Owner Agent Studio"],
+    key="main_navigation_tabs",
 )
 
 with portfolio_tab:
@@ -149,7 +207,10 @@ with portfolio_tab:
     for item in allowed_items:
         with st.container(border=True, key=f"portfolio_card_{item.id}"):
             st.caption(f"{item.category.upper()} · {item.visibility.value.replace('_', ' ').title()}")
-            st.subheader(item.title)
+            st.subheader(
+                item.title,
+                icon=CATEGORY_ICONS.get(item.category.lower(), ":material/article:"),
+            )
             st.write(item.content)
             links = []
             if item.repo_url:

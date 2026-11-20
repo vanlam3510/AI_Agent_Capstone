@@ -1,17 +1,19 @@
 """Pre-LLM cleaning and prompt-injection detection."""
 
+import html
 import re
 import unicodedata
 import uuid
 
 
 INJECTION_PATTERNS = (
-    r"ignore\s+(all\s+)?previous\s+instructions",
-    r"system\s+prompt",
-    r"you\s+are\s+now",
+    r"\bignore\W*(?:all\W*)?(?:previous|prior)\W*(?:instructions?|prompts?)\b",
+    r"\b(?:show|reveal|print|repeat|expose)\W*(?:the\W*)?(?:system|developer)\W*(?:prompt|instructions?)\b",
+    r"\bsystem\W*prompt\b",
+    r"\byou\W+are\W+now\b",
     r"<\|im_start\|>",
-    r"###\s*SYSTEM",
-    r"reveal\s+(owner|private|hidden)\s+(data|notes|info)",
+    r"###\W*system\b",
+    r"\breveal\W+(?:owner|private|hidden)\W+(?:data|notes|info(?:rmation)?)\b",
 )
 
 
@@ -23,13 +25,17 @@ def sanitize_untrusted_text(
         raise ValueError("max_chars must be positive")
 
     alerts: list[str] = []
-    cleaned = re.sub(r"<!--.*?-->", "", raw_text, flags=re.DOTALL)
+    cleaned = html.unescape(html.unescape(str(raw_text)))
+    cleaned = unicodedata.normalize("NFKC", cleaned)
+    cleaned = re.sub(r"<!--.*?-->", " ", cleaned, flags=re.DOTALL)
     cleaned = "".join(
         character
-        for character in cleaned
         if unicodedata.category(character) not in ("Cf", "Cc")
         or character in ("\n", "\t")
+        else " "
+        for character in cleaned
     )
+    cleaned = re.sub(r"[ \f\v]+", " ", cleaned)
     if len(cleaned) > max_chars:
         alerts.append(f"Input was truncated to {max_chars:,} characters.")
     cleaned = cleaned[:max_chars].strip()
