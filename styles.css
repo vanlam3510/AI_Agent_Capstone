@@ -1,0 +1,43 @@
+/* Stable, keyed Streamlit hooks keep these glass effects scoped to this app. */
+.st-key-tier_public button,
+.st-key-tier_signed_in button,
+.st-key-tier_selected button,
+.st-key-tier_owner button {
+    min-height: 2.9rem;
+    justify-content: flex-start;
+    padding-inline: 1rem;
+    border: 1px solid rgba(148, 178, 216, 0.72);
+    background: rgba(255, 255, 255, 0.56);
+    color: #172033 !important;
+    font-weight: 600;
+    backdrop-filter: blur(16px) saturate(145%);
+    -webkit-backdrop-filter: blur(16px) saturate(145%);
+    box-shadow: 0 4px 16px rgba(46, 91, 145, 0.08);
+    transition: transform 150ms ease, box-shadow 150ms ease, background 150ms ease;
+}
+
+.st-key-tier_public button *,
+.st-key-tier_signed_in button *,
+.st-key-tier_selected button *,
+.st-key-tier_owner button * {
+    color: inherit !important;
+    font-weight: inherit;
+}
+
+.st-key-tier_public button:hover,
+.st-key-tier_signed_in button:hover,
+.st-key-tier_selected button:hover,
+.st-key-tier_owner button:hover {
+    transform: translateY(-1px);
+    background: rgba(255, 255, 255, 0.82);
+    box-shadow: 0 8px 22px rgba(46, 91, 145, 0.14);
+}
+
+/* Portfolio cards use keyed roots instead of Streamlit's private test selectors. */
+[class*="st-key-portfolio_card_"] {
+    background: rgba(255, 255, 255, 0.86);
+    backdrop-filter: blur(9px) saturate(125%);
+    -webkit-backdrop-filter: blur(9px) saturate(125%);
+    border-color: rgba(176, 199, 228, 0.82);
+    box-shadow: 0 12px 34px rgba(49, 87, 132, 0.12);
+}

@@ -1,0 +1,87 @@
+{
+  "owner_name": "Van Lam",
+  "beagle_handle": "van-lam",
+  "items": [
+    {
+      "id": "about-career-identity",
+      "category": "about",
+      "title": "20+ Years Bridging Infrastructure & Applied AI",
+      "content": "Bay Area Software Engineer and AI Systems Architect. After 17 years building large-scale hardware validation and telemetry pipelines at Intel and leading CI/CD automation at GlobalFoundries, I now focus on applied AI—designing multi-agent workflows, sub-100ms RAG retrieval, and security-first cloud architectures.",
+      "visibility": "public"
+    },
+    {
+      "id": "project-pivotbridge",
+      "category": "project",
+      "title": "PivotBridge AI Career Platform",
+      "content": "Founding Engineer & AI Architect. Built a full-stack career intelligence platform from the ground up featuring a 7-step assessment, personalized career roadmaps, and the Aurora AI chat agent. Powered by Python, React/TypeScript, PostgreSQL, Milvus vector search, and multi-agent fallback routing on GCP.",
+      "demo_url": "https://pivotbridge.ai",
+      "visibility": "public"
+    },
+    {
+      "id": "project-edge-vision",
+      "category": "project",
+      "title": "Multi-Model Edge Computer Vision Platform",
+      "content": "Engineered a real-time Python inferencing engine combining YOLOv11 and RetinaFace for simultaneous bounding-box detection and facial localization at 30+ FPS, paired with a dynamic labeling and custom weight evaluation pipeline.",
+      "visibility": "public"
+    },
+    {
+      "id": "skills-core-stack",
+      "category": "skills",
+      "title": "Core Technical Stack",
+      "content": "**AI & Agents:** Multi-Agent Orchestration (CrewAI, n8n), RAG (Milvus, Pinecone), Prompt Injection Guardrails, Eval Golden Sets • **Backend & Cloud:** Python (Async/FastAPI), C#/.NET, SQL, React/TypeScript, Docker, GCP, AWS, CI/CD.",
+      "visibility": "public"
+    },
+    {
+      "id": "experience-pivotbridge",
+      "category": "experience",
+      "title": "Founding Engineer & AI Architect — PivotBridge Group",
+      "content": "Took the core AI platform from concept to production MVP 30% ahead of schedule. Engineered defensive input-sanitization guardrails against prompt injection, reduced unstructured data anomalies by 38% via agentic split-logic routing, and scaled containerized microservices behind GCP Cloud Load Balancers.",
+      "visibility": "signed_in"
+    },
+    {
+      "id": "experience-cstu",
+      "category": "experience",
+      "title": "IT Specialist & Graduate Teaching Assistant — CSTU",
+      "content": "Built fault-tolerant asynchronous Python pipelines integrating Zoom and Google Drive APIs to automate classroom media distribution (saving 15 hrs/week) and refactored GCP OAuth 2.0 pathways to cut login errors by 22%. Lead technical workshops mentoring graduate and MBA students on AI and cloud workflows.",
+      "visibility": "signed_in"
+    },
+    {
+      "id": "project-zero-trust",
+      "category": "project",
+      "title": "Zero-Trust Behavioral Security Sandbox",
+      "content": "Built a Python systems simulator modeling Zero-Trust access controls—monitoring live subprocess execution heuristics, logging trace events, and automatically revoking RBAC permissions upon detecting behavioral anomalies.",
+      "visibility": "signed_in"
+    },
+    {
+      "id": "education-academic-foundation",
+      "category": "education",
+      "title": "Academic Foundation",
+      "content": "**M.S. in Computer Systems and Engineering** — California Science and Technology University (CSTU, Expected Sept 2026) • **B.S. in Computer Science** — University of California, Davis.",
+      "visibility": "signed_in"
+    },
+    {
+      "id": "case-study-enterprise-scale",
+      "category": "case study",
+      "title": "Enterprise Scale: Intel & GlobalFoundries Highlights",
+      "content": "Architected a high-throughput SQL Server telemetry pipeline at Intel ingesting millions of daily records (cutting regression detection from 5 days to 15 minutes) and built a self-hosted C# OWIN REST bridge handling 50,000+ hardware reboot cycles at 99.99% uptime. At GlobalFoundries, cut CI/CD cycle times by 60% and saved $120K/year via FlexLM license telemetry.",
+      "visibility": "selected",
+      "allowed_visitors": ["selected@example.com"]
+    },
+    {
+      "id": "contact-direct",
+      "category": "contact",
+      "title": "Direct Contact & Links",
+      "content": "Based in San Jose, CA • Open to AI Engineer, Solutions Architect, and Full-Stack/Platform roles. Email: `silenttundre@gmail.com` • Phone: `(669) 300-5629`.\n\n[GitHub](https://github.com/silenttundre) · [LinkedIn](https://www.linkedin.com/in/van-lam-ab38a42a9/)",
+      "visibility": "selected",
+      "allowed_visitors": ["selected@example.com"]
+    },
+    {
+      "id": "owner-roadmap",
+      "category": "project",
+      "title": "Owner roadmap",
+      "content": "Internal planning notes and unpublished portfolio ideas.",
+      "visibility": "owner_only"
+    }
+  ]
+}
+
