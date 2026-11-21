@@ -16,7 +16,7 @@ from core.sanitizer import sanitize_untrusted_text
 BASE_DIR = Path(__file__).resolve().parent
 DATA_PATH = BASE_DIR / "data" / "portfolio.json"
 BACKGROUND_PATH = BASE_DIR / "assets" / "images" / "portfolio-background.jpeg"
-SECURITY_REVIEW_VERSION = 2
+SECURITY_REVIEW_VERSION = 3
 
 CATEGORY_ICONS = {
     "about": ":material/person:",
@@ -79,12 +79,14 @@ st.html(BASE_DIR / "styles.css")
 set_background(BACKGROUND_PATH)
 st.session_state.setdefault("visitor_messages", [])
 st.session_state.setdefault("owner_draft", None)
+st.session_state.setdefault("owner_draft_error", None)
 st.session_state.setdefault("owner_security_review", None)
 st.session_state.setdefault("access_mode", "Public")
 existing_security_review = st.session_state.get("owner_security_review")
 if existing_security_review and existing_security_review.get("version") != SECURITY_REVIEW_VERSION:
     st.session_state["owner_security_review"] = None
     st.session_state["owner_draft"] = None
+    st.session_state["owner_draft_error"] = None
 store = load_store(str(DATA_PATH), DATA_PATH.stat().st_mtime)
 
 with st.sidebar:
@@ -296,6 +298,7 @@ with owner_tab:
             if not cleaned_notes:
                 st.session_state["owner_security_review"] = None
                 st.session_state["owner_draft"] = None
+                st.session_state["owner_draft_error"] = None
                 st.error("Add project notes before creating a draft.")
             elif flagged:
                 st.session_state["owner_security_review"] = {
@@ -305,6 +308,7 @@ with owner_tab:
                     "cleaned_source": None,
                 }
                 st.session_state["owner_draft"] = None
+                st.session_state["owner_draft_error"] = None
             else:
                 st.session_state["owner_security_review"] = {
                     "version": SECURITY_REVIEW_VERSION,
@@ -312,12 +316,13 @@ with owner_tab:
                     "alerts": alerts,
                     "cleaned_source": cleaned_notes,
                 }
+                st.session_state["owner_draft_error"] = None
                 try:
                     with st.spinner("Drafting an update for owner review…"):
                         st.session_state["owner_draft"] = draft_project_update(cleaned_notes)
                 except Exception as exc:
                     st.session_state["owner_draft"] = None
-                    st.error(f"The AI request could not be completed: {exc}")
+                    st.session_state["owner_draft_error"] = str(exc)
 
         security_review = st.session_state.get("owner_security_review")
         if security_review:
@@ -327,9 +332,20 @@ with owner_tab:
                 )
                 for alert in security_review["alerts"]:
                     st.warning(alert)
+            elif st.session_state.get("owner_draft_error"):
+                st.warning(
+                    "Security scan passed, but draft generation failed. "
+                    "No draft was created."
+                )
+                st.error(
+                    "The AI request could not be completed: "
+                    f"{st.session_state['owner_draft_error']}"
+                )
+                with st.expander("Review sanitized source"):
+                    st.code(security_review["cleaned_source"], language=None)
             else:
                 st.success(
-                    "Security review passed. Only the sanitized source was sent to the LLM."
+                    "Security scan passed and the draft was created successfully."
                 )
                 for alert in security_review["alerts"]:
                     st.info(alert)
@@ -360,6 +376,7 @@ with owner_tab:
                 )
                 save_store(store)
                 st.session_state.pop("owner_draft", None)
+                st.session_state.pop("owner_draft_error", None)
                 st.session_state.pop("owner_security_review", None)
                 st.success("Approved update published to the local portfolio store.")
                 st.rerun()
