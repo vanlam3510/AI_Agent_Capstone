@@ -68,6 +68,7 @@ st.html(BASE_DIR / "styles.css")
 set_background(BACKGROUND_PATH)
 st.session_state.setdefault("visitor_messages", [])
 st.session_state.setdefault("owner_draft", None)
+st.session_state.setdefault("owner_security_review", None)
 st.session_state.setdefault("access_mode", "Public")
 store = load_store(str(DATA_PATH), DATA_PATH.stat().st_mtime)
 
@@ -227,19 +228,45 @@ with owner_tab:
             raw_notes = read_upload(uploaded_file) if uploaded_file else pasted_notes
             cleaned_notes, flagged, alerts = sanitize_untrusted_text(raw_notes)
             if not cleaned_notes:
+                st.session_state["owner_security_review"] = None
+                st.session_state["owner_draft"] = None
                 st.error("Add project notes before creating a draft.")
             elif flagged:
-                st.error("The source was blocked by the pre-LLM security gate.")
-                for alert in alerts:
-                    st.warning(alert)
+                st.session_state["owner_security_review"] = {
+                    "status": "blocked",
+                    "alerts": alerts,
+                    "cleaned_source": None,
+                }
+                st.session_state["owner_draft"] = None
             else:
-                for alert in alerts:
-                    st.info(alert)
+                st.session_state["owner_security_review"] = {
+                    "status": "passed",
+                    "alerts": alerts,
+                    "cleaned_source": cleaned_notes,
+                }
                 try:
                     with st.spinner("Drafting an update for owner review…"):
                         st.session_state["owner_draft"] = draft_project_update(cleaned_notes)
                 except Exception as exc:
+                    st.session_state["owner_draft"] = None
                     st.error(f"The AI request could not be completed: {exc}")
+
+        security_review = st.session_state.get("owner_security_review")
+        if security_review:
+            if security_review["status"] == "blocked":
+                st.error(
+                    "Security review failed. The source was blocked before reaching the LLM."
+                )
+                for alert in security_review["alerts"]:
+                    st.warning(alert)
+            else:
+                st.success(
+                    "Security review passed. Only the sanitized source was sent to the LLM."
+                )
+                for alert in security_review["alerts"]:
+                    st.info(alert)
+                with st.expander("Review sanitized source"):
+                    st.code(security_review["cleaned_source"], language=None)
 
         if st.session_state.get("owner_draft"):
             edited_draft = st.text_area(
@@ -265,6 +292,7 @@ with owner_tab:
                 )
                 save_store(store)
                 st.session_state.pop("owner_draft", None)
+                st.session_state.pop("owner_security_review", None)
                 st.success("Approved update published to the local portfolio store.")
                 st.rerun()
 
