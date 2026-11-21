@@ -41,6 +41,13 @@ def save_store(store: PortfolioStore) -> None:
     load_store.clear()
 
 
+def clear_owner_workflow_state() -> None:
+    """Clear results that belong to the previously selected source file."""
+    st.session_state["owner_security_review"] = None
+    st.session_state["owner_draft"] = None
+    st.session_state["owner_draft_error"] = None
+
+
 def read_upload(uploaded_file) -> str:
     if uploaded_file.type == "application/pdf":
         reader = PdfReader(uploaded_file)
@@ -290,6 +297,8 @@ with owner_tab:
         uploaded_file = st.file_uploader(
             "Project notes or README",
             type=("txt", "md", "pdf"),
+            key="owner_source_file",
+            on_change=clear_owner_workflow_state,
         )
         pasted_notes = st.text_area("Or paste project notes", height=180)
         if st.button("Sanitize and draft", type="primary", icon=":material/auto_awesome:"):
