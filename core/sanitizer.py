@@ -51,13 +51,16 @@ def sanitize_untrusted_text(
         for match in re.finditer(pattern, cleaned, flags=re.IGNORECASE):
             start_line = cleaned.count("\n", 0, match.start()) + 1
             end_line = cleaned.count("\n", 0, match.end()) + 1
+            suspicious_text = re.sub(r"\s+", " ", match.group(0)).strip()
+            suspicious_text = suspicious_text.replace("`", r"\`")
             location = (
                 f"line {start_line}"
                 if start_line == end_line
                 else f"lines {start_line}-{end_line}"
             )
             alerts.append(
-                f"Blocked suspicious pattern at {location} matching: `{pattern}`"
+                f'Blocked suspicious text "{suspicious_text}" at {location}. '
+                f"Detection rule: `{pattern}`"
             )
 
     cleaned = cleaned.strip()

@@ -64,7 +64,10 @@ def test_injection_and_hidden_text_are_detected_and_removed() -> None:
     assert "hidden" not in cleaned
     assert "\u200b" not in cleaned
     assert flagged
-    assert any("line 1" in alert for alert in alerts)
+    assert any(
+        'suspicious text "ignore previous instructions" at line 1' in alert
+        for alert in alerts
+    )
 
 
 def test_injection_reports_exact_original_line_numbers() -> None:
@@ -78,7 +81,10 @@ def test_injection_reports_exact_original_line_numbers() -> None:
 
     assert flagged
     assert "hidden" not in cleaned
-    assert any("line 5" in alert for alert in alerts)
+    assert any(
+        'suspicious text "ignore previous instructions" at line 5' in alert
+        for alert in alerts
+    )
 
 
 def test_multiline_injection_reports_line_range() -> None:
@@ -87,7 +93,10 @@ def test_multiline_injection_reports_line_range() -> None:
     )
 
     assert flagged
-    assert any("lines 2-3" in alert for alert in alerts)
+    assert any(
+        'suspicious text "ignore all previous instructions" at lines 2-3' in alert
+        for alert in alerts
+    )
 
 
 def test_encoded_and_punctuated_injection_is_detected() -> None:
