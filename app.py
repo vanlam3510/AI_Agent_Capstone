@@ -8,7 +8,7 @@ import streamlit as st
 from dotenv import load_dotenv
 from pypdf import PdfReader
 
-from core.llm_agent import answer_visitor_question, draft_project_update
+from core.llm_agent import assess_job_fit, answer_visitor_question, draft_project_update
 from core.models import PortfolioItem, PortfolioStore, VisibilityTier, filter_items_for_visitor
 from core.sanitizer import sanitize_untrusted_text
 
@@ -26,6 +26,52 @@ CATEGORY_ICONS = {
     "education": ":material/school:",
     "case study": ":material/analytics:",
     "contact": ":material/alternate_email:",
+}
+ROLE_STARTER_QUESTIONS = {
+    "Public": {
+        ":blue[:material/person:] Professional overview": (
+            "Give me a concise overview of Van's publicly available experience."
+        ),
+        ":violet[:material/rocket_launch:] Public projects": (
+            "Which public projects best demonstrate Van's technical strengths?"
+        ),
+        ":green[:material/security:] Security experience": (
+            "What public evidence shows Van's security and AI experience?"
+        ),
+    },
+    "Signed in": {
+        ":blue[:material/work_history:] Enterprise experience": (
+            "Summarize Van's enterprise system design experience."
+        ),
+        ":violet[:material/account_tree:] Architecture skills": (
+            "Which authorized projects demonstrate architecture and integration skills?"
+        ),
+        ":green[:material/verified:] Role strengths": (
+            "What are Van's strongest documented qualifications for a senior technical role?"
+        ),
+    },
+    "Selected visitor": {
+        ":blue[:material/security:] Security-role skills": (
+            "Summarize Van's top 3 technical skills for a security role."
+        ),
+        ":violet[:material/rocket_launch:] Best matching projects": (
+            "Which authorized projects best support Van's fit for an AI security role?"
+        ),
+        ":green[:material/contact_mail:] Contact & availability": (
+            "Show the authorized contact details and availability."
+        ),
+    },
+    "Owner": {
+        ":blue[:material/analytics:] Portfolio strengths": (
+            "Summarize the strongest evidence across the full portfolio."
+        ),
+        ":violet[:material/find_in_page:] Evidence gaps": (
+            "What important career claims lack supporting portfolio evidence?"
+        ),
+        ":green[:material/edit_note:] Improvement ideas": (
+            "Suggest three portfolio improvements using only the authorized records."
+        ),
+    },
 }
 load_dotenv(BASE_DIR / ".env")
 
@@ -162,6 +208,8 @@ with st.sidebar:
             type="primary" if st.session_state["access_mode"] == tier_label else "secondary",
             width="stretch",
         ):
+            if st.session_state["access_mode"] != tier_label:
+                st.session_state["visitor_messages"] = []
             st.session_state["access_mode"] = tier_label
             st.rerun()
     access_mode = st.session_state["access_mode"]
@@ -241,19 +289,31 @@ with chat_tab:
     for message in st.session_state["visitor_messages"]:
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
+
+    job_fit_request = None
+    run_fit_check = False
+    if access_mode in ("Selected visitor", "Owner"):
+        with st.expander("Check fit for a job description", icon=":material/search:"):
+            st.caption(
+                "The comparison uses only portfolio records authorized for the current tier."
+            )
+            with st.form("job_fit_form", clear_on_submit=False):
+                job_description = st.text_area(
+                    "Paste job requirements",
+                    height=150,
+                    max_chars=4_000,
+                    key="job_fit_description",
+                )
+                run_fit_check = st.form_submit_button(
+                    "Check job fit",
+                    icon=":material/compare_arrows:",
+                )
+            if run_fit_check:
+                job_fit_request = job_description.strip()
+
     question = st.chat_input("Ask about Van's authorized portfolio", submit_mode="disable")
     if not st.session_state["visitor_messages"]:
-        starter_questions = {
-            ":blue[:material/security:] AI architecture & guardrails": (
-                "What AI architectures and guardrails has Van built in production?"
-            ),
-            ":violet[:material/account_tree:] Enterprise system design": (
-                "Tell me about Van's system design experience at Intel and GlobalFoundries."
-            ),
-            ":green[:material/contact_mail:] Contact & availability": (
-                "What is Van's contact info or availability?"
-            ),
-        }
+        starter_questions = ROLE_STARTER_QUESTIONS[access_mode]
         suggestion_slot = st.empty()
         selected_question = suggestion_slot.pills(
             "Suggested questions",
@@ -279,6 +339,34 @@ with chat_tab:
             except Exception as exc:
                 answer = f"The AI request could not be completed: {exc}"
         st.session_state["visitor_messages"].append({"role": "assistant", "content": answer})
+        with st.chat_message("assistant"):
+            st.markdown(answer)
+    if run_fit_check and not job_fit_request:
+        st.warning("Paste a job description before running the fit check.")
+    elif job_fit_request:
+        display_request = f"Job-description fit check:\n\n{job_fit_request}"
+        st.session_state["visitor_messages"].append(
+            {"role": "user", "content": display_request}
+        )
+        with st.chat_message("user"):
+            st.markdown(display_request)
+        cleaned_description, flagged, alerts = sanitize_untrusted_text(
+            job_fit_request, max_chars=4_000
+        )
+        if flagged:
+            answer = (
+                "The job description was blocked by the pre-LLM security gate. "
+                + " ".join(alerts)
+            )
+        else:
+            try:
+                with st.spinner("Comparing the role with authorized portfolio data…"):
+                    answer = assess_job_fit(cleaned_description, allowed_items)
+            except Exception as exc:
+                answer = f"The AI request could not be completed: {exc}"
+        st.session_state["visitor_messages"].append(
+            {"role": "assistant", "content": answer}
+        )
         with st.chat_message("assistant"):
             st.markdown(answer)
     st.divider()
